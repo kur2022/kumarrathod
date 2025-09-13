@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import yfinance as yf
+from smartapi import SmartConnect
 import plotly.graph_objects as go
 import ta
 from gtts import gTTS
