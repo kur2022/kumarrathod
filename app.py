@@ -27,10 +27,10 @@ def send_voice_alert(text):
     requests.post(url, files=files, data=data)
 
 # SmartAPI credentials
-api_key = "your_api_key"
-client_id = "your_client_id"
-client_password = "your_password"
-totp = "your_totp"
+api_key = "hzDDcAAc"
+client_id = "K98607"
+client_password = "Shlok@2014"
+totp = "181816"
 
 smart_api = SmartConnect(api_key=api_key)
 session = smart_api.generateSession(client_id, client_password, totp)
