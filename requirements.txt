@@ -1,4 +1,5 @@
 # requirements.txt
+smartapi-python
 streamlit
 pandas
 numpy
@@ -15,5 +16,4 @@ plotly
 gtts
 requests
 python-telegram-bot
-smartapi-python
 scikit-learn
