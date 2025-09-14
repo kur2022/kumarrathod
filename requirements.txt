@@ -1,8 +1,9 @@
 streamlit
 pandas
-plotly
 yfinance
 ta
-gTTS
-python-telegram-bot
+plotly
+gtts
 requests
+python-telegram-bot
+smartapi-python
