@@ -1,7 +1,16 @@
+# requirements.txt
 streamlit
 pandas
-yfinance
+numpy
+matplotlib
+seaborn
+scikit-learn
+xgboost
+lightgbm
+catboost
+mlxtend
 ta
+yfinance
 plotly
 gtts
 requests
