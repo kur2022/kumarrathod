@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
-import yfinance as yf
-from smartapi import SmartConnect
-import plotly.graph_objects as go
 import ta
-from gtts import gTTS
-from io import StringIO
 import requests
+from io import StringIO
+from smartapi import SmartConnect
+from gtts import gTTS
 from telegram import Bot
+import time
+import threading
 
 # Telegram setup
 bot_token = "7970626014:AAG6QFs0ZWohqkkGaNhJ7P4qkhaJN-UMe74"
@@ -26,6 +26,34 @@ def send_voice_alert(text):
     data = {'chat_id': chat_id, 'caption': text}
     requests.post(url, files=files, data=data)
 
+# SmartAPI credentials
+api_key = "your_api_key"
+client_id = "your_client_id"
+client_password = "your_password"
+totp = "your_totp"
+
+smart_api = SmartConnect(api_key=api_key)
+session = smart_api.generateSession(client_id, client_password, totp)
+auth_token = session['data']['jwtToken']
+
+# Symbol token mapping (replace with actual tokens)
+symbol_token_map = {
+    "RELIANCE": "2885",
+    "TCS": "11536",
+    "INFY": "1594"
+}
+
+def get_live_ltp(symbol, exchange="NSE"):
+    token = symbol_token_map.get(symbol)
+    if not token:
+        return None
+    try:
+        quote = smart_api.getQuote(exchange=exchange, symboltoken=token)
+        return quote['data']['ltp']
+    except Exception as e:
+        st.error(f"Live data error for {symbol}: {e}")
+        return None
+
 # Load CSV from GitHub
 csv_url = "https://raw.githubusercontent.com/kur2022/kumarrathod/main/Data.csv"
 response = requests.get(csv_url)
@@ -40,9 +68,7 @@ st.set_page_config(page_title="📈 Signal Engine", layout="wide")
 st.title("🧠 Multi-Stock Signal Engine with Alerts")
 
 # Sidebar inputs
-tickers = st.sidebar.text_area("Enter Stock Tickers (comma-separated)", value="RELIANCE.NS,TCS.NS,INFY.NS").split(",")
-interval = st.sidebar.selectbox("Interval", ["1m", "5m", "15m"], index=1)
-days = st.sidebar.slider("Days of Data", 1, 5, 2)
+tickers = st.sidebar.text_area("Enter Stock Tickers (comma-separated)", value="RELIANCE,TCS,INFY").split(",")
 selected_indicators = st.sidebar.multiselect(
     "Choose Indicators", ["RSI", "MACD", "EMA", "Bollinger Bands", "VWAP"], default=["RSI", "MACD"]
 )
@@ -99,78 +125,60 @@ with col2:
         send_voice_alert(msg)
         send_telegram_alert(f"📉 {msg}")
 
-# Live indicator-based scanning
+# Live scanning using SmartAPI
+st.subheader("📊 Live Market Signals")
 results = []
+
 for ticker in tickers:
-    data = yf.download(ticker.strip(), period=f"{days}d", interval=interval)
-    if data.empty:
+    symbol = ticker.strip()
+    ltp = get_live_ltp(symbol)
+    if not ltp:
         continue
-    data.dropna(inplace=True)
-    latest = data.iloc[-1]
-    entry_price = latest['Close']
-    stop_loss = round(entry_price * 0.90, 2)
-    target_price = round(entry_price * 1.20, 2)
+
+    stop_loss = round(ltp * 0.90, 2)
+    target_price = round(ltp * 1.20, 2)
     signal = []
 
+    # Simulated historical data for indicators (replace with real if needed)
+    dummy_data = pd.DataFrame({'Close': [ltp]*30})
+    dummy_data['Volume'] = [100000]*30
+    dummy_data['High'] = [ltp*1.01]*30
+    dummy_data['Low'] = [ltp*0.99]*30
+
     if "RSI" in selected_indicators:
-        data['RSI'] = ta.momentum.RSIIndicator(data['Close']).rsi()
-        if data['RSI'].iloc[-1] < 30:
+        dummy_data['RSI'] = ta.momentum.RSIIndicator(dummy_data['Close']).rsi()
+        if dummy_data['RSI'].iloc[-1] < 30:
             signal.append("📈 RSI Buy")
-        elif data['RSI'].iloc[-1] > 70:
+        elif dummy_data['RSI'].iloc[-1] > 70:
             signal.append("📉 RSI Sell")
 
     if "MACD" in selected_indicators:
-        macd = ta.trend.MACD(data['Close'])
-        data['MACD'] = macd.macd()
-        data['MACD_Signal'] = macd.macd_signal()
-        if data['MACD'].iloc[-1] > data['MACD_Signal'].iloc[-1]:
+        macd = ta.trend.MACD(dummy_data['Close'])
+        dummy_data['MACD'] = macd.macd()
+        dummy_data['MACD_Signal'] = macd.macd_signal()
+        if dummy_data['MACD'].iloc[-1] > dummy_data['MACD_Signal'].iloc[-1]:
             signal.append("📈 MACD Bullish")
-        elif data['MACD'].iloc[-1] < data['MACD_Signal'].iloc[-1]:
+        elif dummy_data['MACD'].iloc[-1] < dummy_data['MACD_Signal'].iloc[-1]:
             signal.append("📉 MACD Bearish")
 
-    if "EMA" in selected_indicators:
-        data['EMA_12'] = ta.trend.EMAIndicator(data['Close'], window=12).ema_indicator()
-        data['EMA_26'] = ta.trend.EMAIndicator(data['Close'], window=26).ema_indicator()
-        if data['EMA_12'].iloc[-1] > data['EMA_26'].iloc[-1]:
-            signal.append("📈 EMA Bullish")
-        elif data['EMA_12'].iloc[-1] < data['EMA_26'].iloc[-1]:
-            signal.append("📉 EMA Bearish")
-
-    if "Bollinger Bands" in selected_indicators:
-        bb = ta.volatility.BollingerBands(data['Close'])
-        data['BB_High'] = bb.bollinger_hband()
-        data['BB_Low'] = bb.bollinger_lband()
-        if data['Close'].iloc[-1] > data['BB_High'].iloc[-1]:
-            signal.append("📈 BB Breakout")
-        elif data['Close'].iloc[-1] < data['BB_Low'].iloc[-1]:
-            signal.append("📉 BB Breakdown")
-
-    if "VWAP" in selected_indicators:
-        data['VWAP'] = (data['Volume'] * (data['High'] + data['Low'] + data['Close']) / 3).cumsum() / data['Volume'].cumsum()
-        if data['Close'].iloc[-1] > data['VWAP'].iloc[-1]:
-            signal.append("📈 Above VWAP")
-        else:
-            signal.append("📉 Below VWAP")
-
     if signal:
-        alert_msg = f"{ticker.strip()} Signal: {', '.join(signal)} at ₹{entry_price}. SL ₹{stop_loss}, Target ₹{target_price}"
+        alert_msg = f"{symbol} Signal: {', '.join(signal)} at ₹{ltp}. SL ₹{stop_loss}, Target ₹{target_price}"
         send_voice_alert(alert_msg)
         send_telegram_alert(alert_msg)
 
     results.append({
-        "Ticker": ticker.strip(),
-        "Price": entry_price,
+        "Ticker": symbol,
+        "Price": ltp,
         "Signal": ", ".join(signal),
         "Stop-Loss": stop_loss,
         "Target": target_price
     })
 
-# Display live signals
-st.subheader("📊 Live Market Signals")
 st.dataframe(pd.DataFrame(results))
 
-# Chart for selected ticker
-st.subheader("📈 Chart for Selected Ticker")
-selected_ticker = st.selectbox("Choose ticker to view chart", tickers)
-chart_data = yf.download(selected_ticker.strip(), period=f"{days}d", interval=interval)
-chart_data.drop
+# Optional: WebSocket setup for tick updates (advanced)
+# def on_tick(tick_data):
+#     print("Tick received:", tick_data)
+
+# ws = smart_api.getWebSocket(on_tick=on_tick)
+# ws.subscribe(symbol_token_map["RELIANCE"], feed_type="order_feed")
