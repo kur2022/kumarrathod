@@ -16,3 +16,4 @@ gtts
 requests
 python-telegram-bot
 smartapi-python
+scikit-learn
