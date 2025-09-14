@@ -8,6 +8,7 @@ from gtts import gTTS
 from telegram import Bot
 import time
 import threading
+from ml_model import train_model
 
 # Telegram setup
 bot_token = "7970626014:AAG6QFs0ZWohqkkGaNhJ7P4qkhaJN-UMe74"
