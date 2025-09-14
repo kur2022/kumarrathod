@@ -11,7 +11,7 @@ from telegram import Bot
 
 # Telegram setup
 bot_token = "7970626014:AAG6QFs0ZWohqkkGaNhJ7P4qkhaJN-UMe74"
-chat_id = "YOUR_CHAT_ID"
+chat_id = "7970626014"
 bot = Bot(token=bot_token)
 
 def send_telegram_alert(message):
