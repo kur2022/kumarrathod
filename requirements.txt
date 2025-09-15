@@ -1,19 +1,7 @@
-# requirements.txt
-smartapi-python
-streamlit==1.28.0
+streamlit
 pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-xgboost
-lightgbm
-catboost
-mlxtend
-ta
-yfinance
-plotly
-gtts
 requests
-python-telegram-bot
-scikit-learn
+beautifulsoup4
+gTTS
+yfinance
+ta
