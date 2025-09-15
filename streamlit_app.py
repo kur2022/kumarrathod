@@ -177,7 +177,7 @@ def main():
                 upperband = hl2 + (3 * atr)
                 lowerband = hl2 - (3 * atr)
                 direction = "Bullish" if ltp > upperband.iloc[-2] else "Bearish" if ltp < lowerband.iloc[-2] else "Neutral"
-                                signal.append("Buy" if direction == "Bullish" else "Short" if direction == "Bearish" else "Neutral")
+                signal.append("Buy" if direction == "Bullish" else "Short" if direction == "Bearish" else "Neutral")
 
             if "Breakouts" in selected_indicators:
                 week_high = data['High'].rolling(window=7).max().iloc[-2]
