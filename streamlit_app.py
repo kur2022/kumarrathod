@@ -9,7 +9,7 @@ from telegram import Bot
 
 # ✅ Telegram setup
 bot_token = "7970626014:AAG6QFs0ZWohqkkGaNhJ7P4qkhaJN-UMe74"
-chat_id = "7970626014"
+chat_id = "-1002785266393"
 bot = Bot(token=bot_token)
 
 def send_telegram_alert(message):
