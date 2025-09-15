@@ -1,3 +1,12 @@
+import streamlit as st
+import pandas as pd
+import requests
+from io import StringIO
+from gtts import gTTS
+import yfinance as yf
+import ta
+from telegram import Bot
+
 def main():
     # Telegram setup
     bot_token = "7970626014:AAG6QFs0ZWohqkkGaNhJ7P4qkhaJN-UMe74"
@@ -16,29 +25,14 @@ def main():
         data = {'chat_id': chat_id, 'caption': text}
         requests.post(url, files=files, data=data)
 
-    # SmartAPI credentials
-    api_key = "hzDDcAAc"
-    client_id = "K98607"
-    client_password = "Shlok@2014"
-    totp = "181816"
-
-    smart_api = SmartConnect(api_key=api_key)
-    session = smart_api.generateSession(client_id, client_password, totp)
-    auth_token = session['data']['jwtToken']
-
-    symbol_token_map = {
-        "RELIANCE": "2885",
-        "TCS": "11536",
-        "INFY": "1594"
-    }
-
-    def get_live_ltp(symbol, exchange="NSE"):
-        token = symbol_token_map.get(symbol)
-        if not token:
-            return None
+    def get_live_ltp(symbol):
         try:
-            quote = smart_api.getQuote(exchange=exchange, symboltoken=token)
-            return quote['data']['ltp']
+            ticker = yf.Ticker(symbol + ".NS")
+            data = ticker.history(period="1d", interval="1m")
+            if not data.empty:
+                return round(data['Close'].iloc[-1], 2)
+            else:
+                return None
         except Exception as e:
             st.error(f"Live data error for {symbol}: {e}")
             return None
@@ -58,7 +52,8 @@ def main():
 
     tickers = st.sidebar.text_area("Enter Stock Tickers (comma-separated)", value="RELIANCE,TCS,INFY").split(",")
     selected_indicators = st.sidebar.multiselect(
-        "Choose Indicators", ["RSI", "MACD", "EMA", "Bollinger Bands", "VWAP"], default=["RSI", "MACD"]
+        "Choose Indicators", ["RSI", "MACD", "EMA", "Bollinger Bands", "VWAP"],
+        default=["RSI", "MACD", "EMA"]
     )
 
     # CSV-based signals
@@ -145,6 +140,30 @@ def main():
                 signal.append("📈 MACD Bullish")
             elif dummy_data['MACD'].iloc[-1] < dummy_data['MACD_Signal'].iloc[-1]:
                 signal.append("📉 MACD Bearish")
+
+        if "EMA" in selected_indicators:
+            ema = ta.trend.EMAIndicator(close=dummy_data['Close'], window=20)
+            dummy_data['EMA'] = ema.ema_indicator()
+            if ltp > dummy_data['EMA'].iloc[-1]:
+                signal.append("📈 EMA Bullish")
+            elif ltp < dummy_data['EMA'].iloc[-1]:
+                signal.append("📉 EMA Bearish")
+
+        if "Bollinger Bands" in selected_indicators:
+            bb = ta.volatility.BollingerBands(close=dummy_data['Close'], window=20, window_dev=2)
+            dummy_data['bb_upper'] = bb.bollinger_hband()
+            dummy_data['bb_lower'] = bb.bollinger_lband()
+            if ltp > dummy_data['bb_upper'].iloc[-1]:
+                signal.append("📉 Overbought (BB)")
+            elif ltp < dummy_data['bb_lower'].iloc[-1]:
+                signal.append("📈 Oversold (BB)")
+
+        if "VWAP" in selected_indicators:
+            dummy_data['VWAP'] = (dummy_data['Volume'] * dummy_data['Close']).cumsum() / dummy_data['Volume'].cumsum()
+            if ltp > dummy_data['VWAP'].iloc[-1]:
+                signal.append("📈 Above VWAP")
+            elif ltp < dummy_data['VWAP'].iloc[-1]:
+                signal.append("📉 Below VWAP")
 
         if signal:
             alert_msg = f"{symbol} Signal: {', '.join(signal)} at ₹{ltp}. SL ₹{stop_loss}, Target ₹{target_price}"
