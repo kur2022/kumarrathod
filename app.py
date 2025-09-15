@@ -42,23 +42,27 @@ def main():
     response = requests.get(csv_url)
     if response.status_code == 200:
         df_csv = pd.read_csv(StringIO(response.text))
+        df_csv.columns = df_csv.columns.str.strip()  # Clean column names
     else:
         st.error("❌ Unable to load CSV data.")
         st.stop()
 
-    # Streamlit UI
     st.set_page_config(page_title="📈 Signal Engine", layout="wide")
     st.title("🧠 Multi-Stock Signal Engine with Alerts")
 
     tickers = st.sidebar.text_area("Enter Stock Tickers (comma-separated)", value="RELIANCE,TCS,INFY").split(",")
     selected_indicators = st.sidebar.multiselect(
-        "Choose Indicators", ["RSI", "MACD", "EMA", "Bollinger Bands", "VWAP"],
+        "Choose Indicators", ["RSI", "MACD", "EMA", "Bollinger Bands", "VWAP", "Candlestick Patterns"],
         default=["RSI", "MACD", "EMA"]
     )
 
     # CSV-based signals
-    volume_boost = df_csv['Volume'] > df_csv['Avg_Week_Volume']
-    volume_drop = df_csv['Volume'] < df_csv['Avg_Week_Volume']
+    if 'Volume' in df_csv.columns and 'Avg_Week_Volume' in df_csv.columns:
+        volume_boost = df_csv['Volume'] > df_csv['Avg_Week_Volume']
+        volume_drop = df_csv['Volume'] < df_csv['Avg_Week_Volume']
+    else:
+        volume_boost = volume_drop = pd.Series([False]*len(df_csv))
+
     near_lows = (
         (df_csv['Price'] - df_csv['Day_Low']) / df_csv['Day_Low'] <= 0.03 |
         (df_csv['Price'] - df_csv['Week_Low']) / df_csv['Week_Low'] <= 0.03 |
@@ -162,24 +166,4 @@ def main():
             dummy_data['VWAP'] = (dummy_data['Volume'] * dummy_data['Close']).cumsum() / dummy_data['Volume'].cumsum()
             if ltp > dummy_data['VWAP'].iloc[-1]:
                 signal.append("📈 Above VWAP")
-            elif ltp < dummy_data['VWAP'].iloc[-1]:
-                signal.append("📉 Below VWAP")
-
-        if signal:
-            alert_msg = f"{symbol} Signal: {', '.join(signal)} at ₹{ltp}. SL ₹{stop_loss}, Target ₹{target_price}"
-            send_voice_alert(alert_msg)
-            send_telegram_alert(alert_msg)
-
-        results.append({
-            "Ticker": symbol,
-            "Price": ltp,
-            "Signal": ", ".join(signal),
-            "Stop-Loss": stop_loss,
-            "Target": target_price
-        })
-
-    st.dataframe(pd.DataFrame(results))
-
-# Entry point
-if __name__ == "__main__":
-    main()
+            elif ltp < dummy_data['VWAP
