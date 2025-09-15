@@ -42,7 +42,7 @@ def main():
     response = requests.get(csv_url)
     if response.status_code == 200:
         df_csv = pd.read_csv(StringIO(response.text))
-        df_csv.columns = df_csv.columns.str.strip()  # Clean column names
+        df_csv.columns = df_csv.columns.str.strip()
     else:
         st.error("❌ Unable to load CSV data.")
         st.stop()
@@ -166,4 +166,11 @@ def main():
             dummy_data['VWAP'] = (dummy_data['Volume'] * dummy_data['Close']).cumsum() / dummy_data['Volume'].cumsum()
             if ltp > dummy_data['VWAP'].iloc[-1]:
                 signal.append("📈 Above VWAP")
-            elif ltp < dummy_data['VWAP
+            elif ltp < dummy_data['VWAP'].iloc[-1]:
+                signal.append("📉 Below VWAP")
+
+        if "Candlestick Patterns" in selected_indicators:
+            open_price = ltp * 0.995
+            close_price = ltp
+            high_price = ltp * 1.01
+            low_price = ltp * 0.99
