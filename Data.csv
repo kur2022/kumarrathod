@@ -1,4 +1,6 @@
-Stock Name,Date,Price,Volume,Day_Low,Day_High,Weekly_Breakout,Monthly_Breakout,RSI,MACD,EMA_20,VWAP,Bollinger,Supertrend,Signal Summary
-RELIANCE,15-09-2025,2500,1200000,2450,2550,Buy,Buy,Buy,Buy,Buy,Buy,Buy,Bullish,Buy
-TCS,15-09-2025,3600,800000,3550,3650,Neutral,Short,Short,Short,Short,Short,Short,Bearish,Short
-INFY,15-09-2025,1450,600000,1400,1500,Buy,Neutral,Neutral,Buy,Buy,Neutral,Neutral,Bullish,Neutral
+Date,Stock,Signal,Entry,Stop-Loss,Target
+15-Sep-2025,RELIANCE,Buy,2500,2375.0,2750.0
+15-Sep-2025,TCS,Short,3600,3420.0,3960.0
+15-Sep-2025,INFY,Buy,1450,1377.5,1595.0
+15-Sep-2025,HDFCBANK,Short,1700,1615.0,1870.0
+15-Sep-2025,JSWSTEEL,Buy,800,760.0,880.0
