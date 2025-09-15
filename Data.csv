@@ -1,4 +1,4 @@
-Stock Name,Price,Volume,Avg_Week_Volume,Day_Low,Week_Low,Month_Low,Day_High,Week_High,Month_High,Signal Type
-RELIANCE,2500,1200000,950000,2450,2400,2350,2550,2600,2650,breakout
-TCS,3600,800000,850000,3550,3500,3450,3650,3700,3750,reversal
-INFY,1450,600000,700000,1400,1380,1350,1500,1520,1550,sell
+Stock Name,Date,Price,Volume,Day_Low,Day_High,Weekly_Breakout,Monthly_Breakout,RSI,MACD,EMA_20,VWAP,Bollinger,Supertrend,Signal Summary
+RELIANCE,15-09-2025,2500,1200000,2450,2550,Buy,Buy,Buy,Buy,Buy,Buy,Buy,Bullish,Buy
+TCS,15-09-2025,3600,800000,3550,3650,Neutral,Short,Short,Short,Short,Short,Short,Bearish,Short
+INFY,15-09-2025,1450,600000,1400,1500,Buy,Neutral,Neutral,Buy,Buy,Neutral,Neutral,Bullish,Neutral
