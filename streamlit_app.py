@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 def fetch_chartink_support():
     url = "https://chartink.com/screener/stocks-near-support"
@@ -46,32 +47,41 @@ def calculate_levels(price):
     return sl, target
 
 def main():
-    st.set_page_config(page_title="📊 Auto Buy/Short Screener", layout="wide")
-    st.title("🧠 Free Technical Screener: Buy & Short Signals")
+    st.set_page_config(page_title="📊 Date-wise Screener", layout="wide")
+    st.title("🧠 Daily Buy & Short Signals")
 
-    with st.spinner("🔍 Fetching signals from Chartink and TopStockResearch..."):
+    today = datetime.now().strftime("%d-%b-%Y")
+
+    with st.spinner("🔍 Fetching today's signals..."):
         buy_signals = fetch_chartink_support()
         short_signals = fetch_topstock_resistance()
 
-    st.subheader("📈 Strong Buy Candidates (Near Support)")
+    st.subheader(f"📅 Signals for {today}")
+
     if buy_signals:
         buy_df = pd.DataFrame([
-            {"Stock": stock, "Entry": price, "Stop-Loss": calculate_levels(price)[0], "Target": calculate_levels(price)[1]}
+            {"Date": today, "Stock": stock, "Signal": "Buy", "Entry": price,
+             "Stop-Loss": calculate_levels(price)[0], "Target": calculate_levels(price)[1]}
             for stock, price in buy_signals
         ])
+        st.markdown("🟢 **Strong Buy Candidates**")
         st.dataframe(buy_df)
     else:
-        st.info("No Buy signals found.")
+        st.info("No Buy signals found today.")
 
-    st.subheader("📉 Strong Short Candidates (Near Resistance)")
     if short_signals:
         short_df = pd.DataFrame([
-            {"Stock": stock, "Entry": price, "Stop-Loss": calculate_levels(price)[0], "Target": calculate_levels(price)[1]}
+            {"Date": today, "Stock": stock, "Signal": "Short", "Entry": price,
+             "Stop-Loss": calculate_levels(price)[0], "Target": calculate_levels(price)[1]}
             for stock, price in short_signals
         ])
+        st.markdown("🔴 **Strong Short Candidates**")
         st.dataframe(short_df)
     else:
-        st.info("No Short signals found.")
+        st.info("No Short signals found today.")
+
+    # Optional: Combine and store historical signals
+    # You could save to a CSV or database if needed
 
 if __name__ == "__main__":
     main()
