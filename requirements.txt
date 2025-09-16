@@ -5,3 +5,5 @@ beautifulsoup4
 gTTS
 yfinance
 ta
+smartapi-python
+websocket-client
