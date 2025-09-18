@@ -1,0 +1,31 @@
+name: Auto Commit CSV
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  commit-csv:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "AutoBot"
+          git config --global user.email "autobot@example.com"
+
+      - name: Commit CSV changes
+        run: |
+          git add Data.csv
+          git commit -m "Auto-update Data.csv" || echo "No changes to commit"
+
+      - name: Push changes
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/kur2022/kumarrathod.git
+          git push origin main
