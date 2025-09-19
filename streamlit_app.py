@@ -7,6 +7,30 @@ from fetchers import fetch_chartink_support, fetch_topstock_resistance
 from alerts import connect_smartapi, get_live_price
 from utils import save_signals, calculate_levels, LOG_FILE
 
+from smartapi import SmartWebSocket
+
+# Store ticks in session state
+if "tick_data" not in st.session_state:
+    st.session_state.tick_data = []
+
+def on_tick(tick_data):
+    tick = tick_data.get("data", [])[0]
+    tick_time = datetime.now().strftime("%H:%M:%S")
+    st.session_state.tick_data.append({
+        "Time": tick_time,
+        "Token": tick["token"],
+        "Price": tick["ltp"],
+        "Volume": tick["volume"]
+    })
+
+def on_connect(ws):
+    tokens = [str(row["Token"]) for _, row in st.session_state.df_selected.iterrows() if "Token" in row]
+    subscriptions = [{"exchange": "NSE", "token": token} for token in tokens]
+    ws.subscribe(subscriptions)
+
+def on_close(ws):
+    print("WebSocket closed")
+
 def main():
     st.set_page_config(page_title="📅 Daily Screener", layout="wide")
     st.title("📊 Daily Buy & Short Screener with Real-Time Alerts")
@@ -28,6 +52,7 @@ def main():
         selected_date = st.selectbox("📅 Select Date to View Signals", options=unique_dates)
 
         df_selected = df_all[df_all['Date'].dt.strftime("%d-%b-%Y") == selected_date]
+        st.session_state.df_selected = df_selected
 
         st.subheader(f"🟢 Buy Signals for {selected_date}")
         df_buy = df_selected[df_selected['Signal'] == "Buy"]
@@ -38,11 +63,11 @@ def main():
         st.dataframe(df_short if not df_short.empty else pd.DataFrame(columns=df_selected.columns))
 
         st.subheader("⚡ Real-Time Price Alerts (Angel Broking)")
-        api = connect_smartapi()
+        api, feed_token = connect_smartapi()
         if api:
             for _, row in df_selected.iterrows():
                 symbol = f"{row['Stock']}-EQ"
-                token = "2885"  # Replace with actual token lookup
+                token = row.get("Token", "2885")  # Replace with actual token lookup
                 live_price = get_live_price(api, symbol, token)
                 if live_price:
                     if row['Signal'] == "Buy" and live_price > row['Target']:
@@ -53,6 +78,18 @@ def main():
                         st.info(f"ℹ️ {row['Stock']} live: ₹{live_price}")
                 else:
                     st.warning(f"⚠️ Could not fetch price for {row['Stock']}")
+
+        st.subheader("📡 Tick-by-Tick Live Feed")
+        if st.button("Start Tick Streaming"):
+            sws = SmartWebSocket(feed_token, api.client_code, api.api_key)
+            sws.on_ticks = on_tick
+            sws.on_connect = on_connect
+            sws.on_close = on_close
+            sws.connect()
+
+        if st.session_state.tick_data:
+            df_ticks = pd.DataFrame(st.session_state.tick_data)
+            st.dataframe(df_ticks.tail(10), use_container_width=True)
     else:
         st.warning("📭 No signal history found yet. Please run the app again after today's signals are fetched.")
 
