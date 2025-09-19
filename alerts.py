@@ -1,31 +1,15 @@
-from SmartApi import SmartConnect
-import pyotp
-import os
-from dotenv import load_dotenv
+from smartapi import SmartConnect
 
-load_dotenv()
-
-API_KEY = os.getenv("API_KEY")
-CLIENT_CODE = os.getenv("CLIENT_CODE")
-PIN = os.getenv("PIN")
-TOTP_SECRET = os.getenv("TOTP_SECRET")
+# Replace with your actual credentials
+API_KEY = "ccFD3Nzr"
+CLIENT_CODE = "K98607"
+PIN = "2014"
+SECRET_KEY = "9bbe9b5c-c8f3-4fa2-91c7-62dfd29efa23"
 
 def connect_smartapi():
-    totp = pyotp.TOTP(TOTP_SECRET).now()
-    smartApi = SmartConnect(API_KEY)
-    data = smartApi.generateSession(CLIENT_CODE, PIN, totp)
-    if not data['status']:
-        return None
-    return smartApi
-
-def get_live_price(api, symbol, token):
-    params = {
-        "exchange": "NSE",
-        "tradingsymbol": symbol,
-        "symboltoken": token
-    }
-    try:
-        quote = api.getQuote(params)
-        return quote['data']['ltp']
-    except:
-        return None
+    obj = SmartConnect(api_key=API_KEY)
+    data = obj.generateSession(CLIENT_CODE, PIN, SECRET_KEY)
+    access_token = data['data']['access_token']
+    obj.setAccessToken(access_token)
+    feed_token = obj.getfeedToken()
+    return obj, feed_token
