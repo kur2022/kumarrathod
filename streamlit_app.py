@@ -2,11 +2,10 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
-from smartapi import SmartConnect
-from smartapi import SmartWebSocket
-from utils import connect_smartapi, get_live_price
+
+from smartapi import SmartConnect, SmartWebSocket
+from utils import connect_smartapi, get_live_price, save_signals, calculate_levels, LOG_FILE
 from fetchers import fetch_chartink_support, fetch_topstock_resistance
-from utils import save_signals, calculate_levels, LOG_FILE
 
 # Store ticks in session state
 if "tick_data" not in st.session_state:
