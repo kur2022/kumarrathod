@@ -5,7 +5,7 @@ import time
 import threading
 
 # ---- USER CONFIG ----
-API_KEY = "IBFbAJX1"
+API_KEY = "lBFbAJX1"
 CLIENT_ID = "K98607"
 PASSWORD = "2014"
 TOTP = "393487"  # If applicable
