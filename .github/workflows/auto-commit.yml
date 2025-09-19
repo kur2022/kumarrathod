@@ -1,17 +1,16 @@
-name: Auto Commit CSV
+name: Auto Create Pull Request
 
 on:
-  push:
-    branches:
-      - main
   schedule:
-    - cron: '0 0 * * *'  # Daily at midnight UTC
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
-  commit-csv:
+  auto-pr:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,14 +33,19 @@ jobs:
           git config --global user.name "AutoBot"
           git config --global user.email "autobot@example.com"
 
-      - name: Commit CSV changes
+      - name: Create new branch
         run: |
+          git checkout -b auto-update-data || git checkout auto-update-data
           git add Data.csv
           git commit -m "Auto-update Data.csv" || echo "No changes to commit"
+          git push -u origin auto-update-data
 
-      - name: Push changes
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/kur2022/kumarrathod.git
-          git push origin main
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+          commit-message: Auto-update Data.csv
+          branch: auto-update-data
+          title: "Daily Data Update"
+          body: "This PR updates Data.csv with the latest data."
+          base: main
