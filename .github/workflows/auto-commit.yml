@@ -17,7 +17,7 @@ jobs:
       SMARTAPI_CLIENT_ID: ${{ secrets.SMARTAPI_CLIENT_ID }}
       SMARTAPI_API_KEY: ${{ secrets.SMARTAPI_API_KEY }}
       SMARTAPI_MPIN: ${{ secrets.SMARTAPI_MPIN }}
-      SMARTAPI_TOTP_SECRET: ${{ secrets.SMARTAPI_TOTP_SECRET }}
+      SMARTAPI_SECRET_KEY: ${{ secrets.SMARTAPI_SECRET_KEY }}
 
     steps:
       - name: Checkout repository
@@ -29,7 +29,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install smartapi-python pandas pyotp
+        run: pip install smartapi-python pandas pyotp python-dotenv
 
       - name: Run update script
         run: python update_data.py
