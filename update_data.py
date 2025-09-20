@@ -5,27 +5,26 @@ import datetime
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env (for local testing)
+# Load environment variables from .env
 load_dotenv()
 
-# Credentials from environment
-client_id = os.getenv("SMARTAPI_CLIENT_ID")
-api_key = os.getenv("SMARTAPI_API_KEY")
-mpin = os.getenv("SMARTAPI_MPIN")
-secret_key = os.getenv("SMARTAPI_SECRET_KEY")
+# Credentials
+client_id = os.getenv("K98607")
+api_key = os.getenv("lBFbAJX1")
+mpin = os.getenv("2014")
+secret_key = os.getenv("b85f1564-b805-4aa6-86ff-f8d0103d9f18")
 
-# Generate TOTP using secret key
+# Generate TOTP from secret key
 totp = pyotp.TOTP(secret_key).now()
 
-# Initialize SmartConnect and login
+# Initialize SmartConnect and authenticate
 obj = SmartConnect(api_key=api_key)
 login_data = obj.generateSession(client_id=client_id, pin=mpin, totp=totp)
 
-# Get access and feed tokens
-access_token = login_data['data']['access_token']
+# Get feed token (required for market data)
 feed_token = obj.getfeedToken()
 
-# Define stocks and parameters
+# Define parameters
 stocks = ["RELIANCE", "TCS", "INFY"]
 exchange = "NSE"
 interval = "ONE_DAY"
