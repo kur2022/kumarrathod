@@ -2,9 +2,10 @@ import pandas as pd
 import os
 import pyotp
 from smartapi import SmartConnect
+import datetime
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables from .env
 load_dotenv()
 
 # Constants
@@ -37,6 +38,42 @@ def calculate_levels(price):
     stop_loss = round(price * 0.95, 2)
     target = round(price * 1.10, 2)
     return stop_loss, target
+
+# 📊 Detect breakout signals
+def detect_breakouts(api, stocks, exchange="NSE", days=7):
+    breakout_signals = []
+    from_date = (datetime.datetime.now() - datetime.timedelta(days=days + 1)).strftime('%Y-%m-%d %H:%M')
+    to_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
+
+    for stock in stocks:
+        try:
+            token = lookup_token(api, f"{stock}-EQ", exchange)
+            if not token:
+                continue
+
+            data = api.get_historical_data(
+                exchange=exchange,
+                symboltoken=token,
+                symbol=stock,
+                interval="ONE_DAY",
+                fromdate=from_date,
+                todate=to_date
+            )
+
+            df = pd.DataFrame(data['data'])
+            if len(df) < days + 1:
+                continue
+
+            recent_high = df['high'].iloc[-(days+1):-1].max()
+            today_close = df['close'].iloc[-1]
+
+            if today_close > recent_high:
+                breakout_signals.append((stock, today_close))
+
+        except Exception as e:
+            print(f"Error processing {stock}: {e}")
+
+    return breakout_signals
 
 # 💾 Save signals to CSV
 def save_signals(date, buy_signals, short_signals):
