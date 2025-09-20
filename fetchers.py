@@ -1,42 +1,38 @@
 import requests
-from bs4 import BeautifulSoup
+import pandas as pd
 
+# 📊 Chartink Screener: Buy Signals
 def fetch_chartink_support():
-    url = "https://chartink.com/screener/stocks-near-support"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    table = soup.find("table", {"id": "DataTables_Table_0"})
-    rows = table.find_all("tr")[1:] if table else []
+    url = "https://chartink.com/screener/process"
+    payload = {
+        "scan_clause": "your_chartink_buy_scan_clause_here"
+    }
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
 
-    support_stocks = []
-    for row in rows:
-        cols = row.find_all("td")
-        if len(cols) >= 2:
-            stock = cols[0].text.strip()
-            try:
-                price = float(cols[1].text.strip().replace(",", ""))
-                support_stocks.append((stock, price))
-            except:
-                continue
-    return support_stocks
+    try:
+        response = requests.post(url, data=payload, headers=headers)
+        data = response.json()
+        rows = data.get("data", [])
+        return [(row["nsecode"], float(row["close"])) for row in rows]
+    except Exception as e:
+        print(f"Error fetching Chartink buy signals: {e}")
+        return []
 
+# 📉 Topstock Screener: Short Signals
 def fetch_topstock_resistance():
-    url = "https://www.topstockresearch.com/rt/Screener/Technical/PivotPoint/StandardPivotPoint/ListSupportOrResistance"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    table = soup.find("table", {"class": "tableizer-table"})
-    rows = table.find_all("tr")[1:] if table else []
+    url = "https://topstockresearch.com/api/screener"
+    params = {
+        "type": "resistance_breakdown",
+        "exchange": "NSE"
+    }
 
-    resistance_stocks = []
-    for row in rows:
-        cols = row.find_all("td")
-        if len(cols) >= 2:
-            stock = cols[0].text.strip()
-            try:
-                price = float(cols[1].text.strip().replace(",", ""))
-                resistance_stocks.append((stock, price))
-            except:
-                continue
-    return resistance_stocks
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        rows = data.get("stocks", [])
+        return [(row["symbol"], float(row["price"])) for row in rows]
+    except Exception as e:
+        print(f"Error fetching Topstock short signals: {e}")
+        return []
