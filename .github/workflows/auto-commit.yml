@@ -13,6 +13,12 @@ jobs:
   auto-pr:
     runs-on: ubuntu-latest
 
+    env:
+      SMARTAPI_CLIENT_ID: ${{ secrets.SMARTAPI_CLIENT_ID }}
+      SMARTAPI_API_KEY: ${{ secrets.SMARTAPI_API_KEY }}
+      SMARTAPI_MPIN: ${{ secrets.SMARTAPI_MPIN }}
+      SMARTAPI_TOTP_SECRET: ${{ secrets.SMARTAPI_TOTP_SECRET }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -23,12 +29,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: |
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          else
-            pip install yfinance pandas
-          fi
+        run: pip install smartapi-python pandas pyotp
 
       - name: Run update script
         run: python update_data.py
